@@ -1,7 +1,7 @@
 import asyncio
 import logging
-from aiohttp import web
 import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from config import Config
 from database import Database
@@ -13,23 +13,20 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-async def health_check(request):
-    return web.Response(text="OK")
-
-async def start_web_server(port):
-    app = web.Application()
-    app.router.add_get('/health', health_check)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', port)
-    await site.start()
-    logging.info(f"Web server started on port {port}")
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'OK')
+        else:
+            self.send_response(404)
+            self.end_headers()
 
 def run_web_server(port):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(start_web_server(port))
-    loop.run_forever()
+    server = HTTPServer(('0.0.0.0', port), HealthHandler)
+    logging.info(f"Web server started on port {port}")
+    server.serve_forever()
 
 async def main():
     config = Config()

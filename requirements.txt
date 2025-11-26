@@ -4,3 +4,4 @@ redis==5.0.1
 matplotlib==3.7.2
 Pillow==10.0.1
 psutil==5.9.6
+aiohttp==3.9.1
